@@ -1,19 +1,9 @@
-{%- assign home_page = site.data.home_page | default: 'index.html' -%}
-{%- assign header_links = site.data.header_links -%}
+
 {%- assign header_pages = site.data.header_pages | default: default_paths -%}
 
 <header>
   <div class="menu">
     <ul>
-      {%- assign my_home_page = site.pages | where: "path", home_page | first -%}
-      <li><a href="{{ my_home_page.url | relative_url }}">{{ my_home_page.title | escape }}</a></li>
-      
-      {%- if header_links -%}
-        {%- for link in header_links -%}
-          <li><a href="{{ link.url | relative_url }}">{{ link.title | escape }}</a></li>
-        {%- endfor -%}
-      {%- endif -%}
-
       {%- for path in header_pages -%}
         {%- assign my_page = site.pages | where: "path", path | first -%}
         {%- if my_page.title -%}
