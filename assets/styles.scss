@@ -1,0 +1,41 @@
+--- 
+--- 
+
+.images40 {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 40%;
+}
+
+.images100 {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+
+.imgLabel {
+    font-style: italic;
+    text-decoration: none;
+    text-align: center;
+    display: block;
+}
+
+.tagheader {
+    font-style: normal;
+    text-decoration: none;
+    text-align: center;
+    display: block;
+}
+
+.images:hover {
+    transform: scaleX(-1);
+}
+
+.ascii {
+    display: block;
+    margin-left: auto;
+    margin-right: 0px;
+    width: 33%;
+}
