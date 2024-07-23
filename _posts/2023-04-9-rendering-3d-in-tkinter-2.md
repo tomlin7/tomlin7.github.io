@@ -2,7 +2,7 @@
 layout: post
 title: "Rendering 3D in tkinter: Rendering Faces and Lighting"
 date: 2023-04-09 01:11:00 +0100
-categories: tkinter, python
+tags: tkinter, python
 ---
 
 So now, we're about to render faces for the cube we rendered, which didn't have any face :"(
