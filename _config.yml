@@ -1,0 +1,18 @@
+title: "Billy's blog"
+description: "A blog about coding and stuff"
+baseurl: "/"
+url: "https://tomlin7.github.io"
+
+header_pages:
+  - index.md
+  - peter.md
+  - about.md
+  - contact.md
+
+style: dark
+
+footer: 'copyright &copy; <a href="https://github.com/tomlin7">tomlin7</a>'
+
+# Build settings
+markdown: kramdown
+remote_theme: tomlin7/jekyll-theme-console
