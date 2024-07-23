@@ -7,8 +7,7 @@ description: "Billy's blog about coding and stuff"
 baseurl: "/"
 url: "https://tomlin7.github.io"
 
-home_page:
-  - index.md
+home_page: "index.md"
 
 header_pages:
   - about.md
