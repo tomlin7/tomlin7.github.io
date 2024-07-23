@@ -1,16 +1,17 @@
 ---
 layout: post
 title: "Adding Extensions Support for Your Apps!"
-author: "Billy"
-tags: extensions, python
+date: 2023-07-07 01:11:00 +0100
+categories: extensions, python
 ---
 
-**Extensions** has been a very popular and trending concept in customizable applications development. It extends the app's functionality and features, and tweaks different parts of the application to work as the user wants it to. Most of the modern apps have support for extensions. So, let's break it down. How do they work? how are they managed and shared across the users pretty easily? How do they integrate with the apps pretty well!? 
+**Extensions** has been a very popular and trending concept in customizable applications development. It extends the app's functionality and features, and tweaks different parts of the application to work as the user wants it to. Most of the modern apps have support for extensions. So, let's break it down. How do they work? how are they managed and shared across the users pretty easily? How do they integrate with the apps pretty well!?
 To breal it down, we will be creating a very similar system with python in this post.
 
-
 ## The Extensions API!
+
 For the extensions to integrate and communicate with the editor perfectly and efficiently, there should be a strong and safe extensions API available!
+
 ```py
 # extension_api.py
 class ExtensionAPI:
@@ -21,10 +22,13 @@ class ExtensionAPI:
         # access some component of the app
         ...
 ```
+
 This API can be made more accessible and rich by adding many more endpoints and many more functions! for now, we have a `hello_world` function as an example.
 
 ## The extension Manager
-The extensions manager's duty is to load/unload/run the extensions available. **importlib**(builtin lib) is used to import the extension script file from a specific directory made for extensions where the app will look for extensions. 
+
+The extensions manager's duty is to load/unload/run the extensions available. **importlib**(builtin lib) is used to import the extension script file from a specific directory made for extensions where the app will look for extensions.
+
 ```py
 # extension_manager.py
 import importlib
@@ -53,10 +57,13 @@ class ExtensionManager:
         for extension in self.extensions:
             extension.run()
 ```
+
 This extension manager doesn't have the feature to load/run specific extensions yet, but it checks and loads all the scripts inside the `extensions` directory. This can be run on a different thread if the app has a GUI main loop running in the main thread, for example in the case of a tkinter app.
 
 ## The Extension Structure
-To access the API, reference of the api instance will be passed to the extension as well! For now, the class shall be named `Extension` as we are checking for the specifically named class in the extensions manager. 
+
+To access the API, reference of the api instance will be passed to the extension as well! For now, the class shall be named `Extension` as we are checking for the specifically named class in the extensions manager.
+
 ```py
 # extensions/hello.py
 class Extension:
@@ -71,7 +78,9 @@ class Extension:
 Functions that are executed when the app starts up can be called during the extension's initialization as well, this won't affect the app as it can be made to run in a separate thread. You can also extend this setup to add different event listeners with the API to decide when the extension will fire up! (eg. when a specific type of file is handled, x extension to be started).
 
 ## Integrating with the Application
+
 The final step will be adding the functionality to your application, to demonstrate, I will be running the sample hello extension for now!
+
 ```py
 import os
 from extension_api import ExtensionAPI
@@ -87,7 +96,9 @@ manager.run_plugins()
 ```
 
 ## Multithreading the Extensions Manager!
+
 As mentioned above, there can be cases where the extensions may be run aside a gui application, or when the extensions do time consuming I/O tasks, this can lag the app quite a big. Hence we run the extensions on a different thread aside from the main thread.
+
 ```py
 import threading
 ...
@@ -102,9 +113,9 @@ thread.join()
 ```
 
 ## Malicious extensions!?
-Another question that may asked here is, what about the safety of extensions? extensions can be malicious since they are simply python scripts!? 
+
+Another question that may asked here is, what about the safety of extensions? extensions can be malicious since they are simply python scripts!?
 
 This is the point where we move on to making the extensions manager run the extensions in a sandboxed environment! I was planning to demonstrate this with the [**pysandbox**](https://github.com/vstinner/pysandbox) but the library is now marked as "broken by design", you can read up further on it. There are some alternatives but none has been able to do this task perfectly. So this issue will remain unsolved.
-
 
 Aaaand that will be it! You will have a very basic extensions manager and API set up for your app! Now the task is to extend the API further to make it more accessible ❤

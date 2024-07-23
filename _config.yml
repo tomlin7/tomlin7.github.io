@@ -1,13 +1,18 @@
 title: "Billy's blog"
-description: "A blog about coding and stuff"
+description: "Billy's blog about coding and stuff"
 baseurl: "/"
 url: "https://tomlin7.github.io"
 
-header_pages:
+home_page:
   - index.md
-  - peter.md
+
+header_pages:
   - about.md
   - contact.md
+
+header_links:
+  - title: "biscuit"
+    url: "https://tomlin7.github.io/biscuit"
 
 style: dark
 
