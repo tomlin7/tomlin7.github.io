@@ -3,6 +3,11 @@
 <header>
   <div class="menu">
     <ul>
+      {%- assign home_page = site.pages | where: "path", "index.md" | first -%}
+      {%- if home_page.title -%}
+      <li><a href="{{ home_page.url | relative_url }}">{{ home_page.title | escape }}</a></li>
+      {%- endif -%}
+      
       {%- if header_links -%}
         {%- for link in header_links -%}
           <li><a href="{{ link.url | relative_url }}">{{ link.title | escape }}</a></li>

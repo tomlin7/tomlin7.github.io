@@ -8,12 +8,11 @@ baseurl: "/"
 url: "https://tomlin7.github.io"
 
 header_pages:
-  - index.md
   - about.md
   - contact.md
 
 header_links:
-  - title: "biscuit"
+  - title: "/biscuit"
     url: "https://tomlin7.github.io/biscuit"
 
 style: dark
