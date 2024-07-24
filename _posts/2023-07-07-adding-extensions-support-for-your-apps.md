@@ -2,7 +2,7 @@
 layout: post
 title: "Adding Extensions Support for Your Apps!"
 date: 2023-07-07 01:11:00 +0100
-tags: extensions, python
+tags: extensions python
 ---
 
 **Extensions** has been a very popular and trending concept in customizable applications development. It extends the app's functionality and features, and tweaks different parts of the application to work as the user wants it to. Most of the modern apps have support for extensions. So, let's break it down. How do they work? how are they managed and shared across the users pretty easily? How do they integrate with the apps pretty well!?

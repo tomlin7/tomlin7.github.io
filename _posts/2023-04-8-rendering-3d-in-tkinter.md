@@ -2,7 +2,7 @@
 layout: post
 title: "Rendering 3D in tkinter canvas!"
 date: 2023-04-08 01:11:00 +0100
-tags: tkinter, python
+tags: tkinter python
 ---
 
 Tkinter?! yep that's right, that good ol' python tk gui library is what we're talking about. Known for creating not-so good and modern looking but uh it still gets everything done. Aaand since we're using python, it feels soo easy and simple to create guis with tkinter. So we should definitely render some 3D graphics with the library. But how? and why?
