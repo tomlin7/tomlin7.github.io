@@ -196,25 +196,31 @@ export function VineBackground() {
         const initVines = () => {
             vines.length = 0 // Clear existing
 
+            // Calculate segments based on height (approximate)
+            const minSegments = Math.floor((canvas.height * 0.4) / SEGMENT_LENGTH)
+            const maxSegmentsBonus = Math.floor((canvas.height * 0.2) / SEGMENT_LENGTH)
+
             // Top-left corner vines
             const topLeftCount = 5 + Math.floor(Math.random() * 3)
             for (let i = 0; i < topLeftCount; i++) {
                 const rand = Math.random()
                 if (rand > 0.85) {
-                    // Vertical from top (reduced)
-                    const x = 20 + Math.random() * 100
-                    const segments = 12 + Math.floor(Math.random() * 10)
+                    // Vertical from top (Longer) with occasional vines closer to middle
+                    const spread = Math.random() > 0.7 ? canvas.width * 0.4 : 200
+                    const x = 20 + Math.random() * spread
+                    const segments = minSegments + Math.floor(Math.random() * maxSegmentsBonus)
                     vines.push(new Vine(x, 0, segments, true))
                 } else if (rand > 0.7) {
-                    // Horizontal from side (reduced)
+                    // Horizontal from side
                     const y = 20 + Math.random() * 100
-                    const segments = 10 + Math.floor(Math.random() * 8)
+                    const segments = 20 + Math.floor(Math.random() * 15)
                     vines.push(new Vine(0, y, segments, false))
                 } else {
                     // Jointed between top and LEFT side ONLY
-                    const topX = 30 + Math.random() * 120
-                    const sideY = 50 + Math.random() * 120
-                    const segments = 16 + Math.floor(Math.random() * 12)
+                    const spread = Math.random() > 0.7 ? canvas.width * 0.4 : 200
+                    const topX = 30 + Math.random() * spread
+                    const sideY = 50 + Math.random() * 200
+                    const segments = minSegments + 10 + Math.floor(Math.random() * maxSegmentsBonus)
                     vines.push(new Vine(topX, 0, segments, false, 0, sideY))
                 }
             }
@@ -224,20 +230,22 @@ export function VineBackground() {
             for (let i = 0; i < topRightCount; i++) {
                 const rand = Math.random()
                 if (rand > 0.85) {
-                    // Vertical from top (reduced)
-                    const x = canvas.width - 120 + Math.random() * 100
-                    const segments = 12 + Math.floor(Math.random() * 10)
+                    // Vertical from top (Longer) with occasional vines closer to middle
+                    const spread = Math.random() > 0.7 ? canvas.width * 0.4 : 200
+                    const x = canvas.width - (20 + Math.random() * spread)
+                    const segments = minSegments + Math.floor(Math.random() * maxSegmentsBonus)
                     vines.push(new Vine(x, 0, segments, true))
                 } else if (rand > 0.7) {
-                    // Horizontal from side (reduced)
+                    // Horizontal from side
                     const y = 20 + Math.random() * 100
-                    const segments = 10 + Math.floor(Math.random() * 8)
+                    const segments = 20 + Math.floor(Math.random() * 15)
                     vines.push(new Vine(canvas.width, y, segments, false))
                 } else {
                     // Jointed between top and RIGHT side ONLY
-                    const topX = canvas.width - 150 + Math.random() * 120
-                    const sideY = 50 + Math.random() * 120
-                    const segments = 16 + Math.floor(Math.random() * 12)
+                    const spread = Math.random() > 0.7 ? canvas.width * 0.4 : 200
+                    const topX = canvas.width - (30 + Math.random() * spread)
+                    const sideY = 50 + Math.random() * 200
+                    const segments = minSegments + 10 + Math.floor(Math.random() * maxSegmentsBonus)
                     vines.push(new Vine(topX, 0, segments, false, canvas.width, sideY))
                 }
             }
@@ -256,10 +264,10 @@ export function VineBackground() {
 
             time += 0.02
 
-            // Intermittent breeze
+            // Intermittent breeze - more frequent and stronger
             if (time > nextWindChange) {
-                if (Math.random() > 0.7) {
-                    windStrength = (Math.random() - 0.5) * 0.3
+                if (Math.random() > 0.6) { // Increased chance of wind
+                    windStrength = (Math.random() - 0.5) * 0.8 // Stronger wind (was 0.3)
                     nextWindChange = time + 2 + Math.random() * 4
                 } else {
                     windStrength = 0
@@ -268,8 +276,9 @@ export function VineBackground() {
             }
 
             // Gradually reduce wind
-            windStrength *= 0.95
-            const wind = windStrength * Math.sin(time * 3)
+            windStrength *= 0.98 // Slower damping (was 0.95) for longer lasting wind
+            // Add some complexity to the wind wave
+            const wind = windStrength * (Math.sin(time * 2) + Math.sin(time * 5) * 0.5)
 
             vines.forEach(vine => {
                 vine.update(wind)
