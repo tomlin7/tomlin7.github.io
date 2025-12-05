@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   description: "Portfolio of Tomlin7, a Computer Engineering Student & Digital Craftsman.",
 };
 
+import SmoothScroller from "@/components/smooth-scroller"
 import { ThemeProvider } from "@/components/theme-provider"
 
 export default function RootLayout({
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <SmoothScroller />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
