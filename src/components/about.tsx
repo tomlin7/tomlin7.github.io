@@ -15,12 +15,12 @@ export function About() {
                     <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-6">
                         About Me
                     </h2>
-                    <div className="space-y-4 text-muted-foreground text-lg">
+                    <div className="space-y-4 text-muted-foreground text-lg font-mono">
                         <p>
-                            I am a dedicated developer with a strong foundation in modern web technologies. My journey in coding began with a curiosity for how things work, and it has evolved into a career where I solve complex problems through clean and efficient code.
+                            I am a Computer Engineering student and Software Engineer with a passion for building robust and minimalist systems. My work focuses on the intersection of hardware and software, creating efficient solutions that stand the test of time.
                         </p>
                         <p>
-                            When I'm not coding, you can find me exploring new technologies, contributing to open source, or enjoying a good cup of coffee. I believe in continuous learning and always strive to stay ahead of the curve.
+                            Currently studying Computer Engineering, I am always diving deep into low-level logic while maintaining high-level design aesthetics. I value simplicity, performance, and precision in every line of code I write.
                         </p>
                     </div>
                 </motion.div>

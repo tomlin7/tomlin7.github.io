@@ -14,7 +14,7 @@ export function Navbar() {
             <div className="container mx-auto flex h-16 max-w-screen-2xl items-center justify-between px-4">
                 <div className="flex gap-6 md:gap-10">
                     <Link href="/" className="flex items-center space-x-2">
-                        <span className="font-bold inline-block">PORTFOLIO</span>
+                        <span className="font-bold inline-block font-mono text-xl">Tomlin7</span>
                     </Link>
                     <div className="hidden md:flex gap-6">
                         <Link
