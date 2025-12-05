@@ -191,6 +191,62 @@ export function VineBackground() {
             }
         }
 
+        class ShootingStar {
+            x: number
+            y: number
+            length: number
+            speed: number
+            opacity: number
+            life: number
+
+            constructor(canvasWidth: number, canvasHeight: number) {
+                this.x = Math.random() * canvasWidth
+                this.y = Math.random() * (canvasHeight * 0.5) // Top half only
+                this.length = 50 + Math.random() * 80
+                this.speed = 1 + Math.random() * 10
+                this.opacity = 0
+                this.life = 100 // frames
+            }
+
+            update() {
+                this.x -= this.speed
+                this.y += this.speed * 0.5 // Angled down
+                this.life--
+
+                // Fade in then out
+                if (this.life > 80) {
+                    this.opacity += 0.05
+                } else if (this.life < 20) {
+                    this.opacity -= 0.05
+                }
+
+                if (this.opacity > 1) this.opacity = 1
+                if (this.opacity < 0) this.opacity = 0
+            }
+
+            draw(ctx: CanvasRenderingContext2D) {
+                if (this.opacity <= 0) return
+
+                const steps = Math.floor(this.length / PIXEL_SIZE)
+
+                for (let i = 0; i < steps; i++) {
+                    const alpha = this.opacity * (1 - i / steps)
+
+                    if (Math.random() > 0.5) { // Dither effect
+                        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`
+
+                        const px = this.x + (i * PIXEL_SIZE)
+                        const py = this.y - (i * PIXEL_SIZE * 0.5)
+
+                        const x = Math.floor(px / PIXEL_SIZE) * PIXEL_SIZE
+                        const y = Math.floor(py / PIXEL_SIZE) * PIXEL_SIZE
+
+                        ctx.fillRect(x, y, PIXEL_SIZE, PIXEL_SIZE)
+                    }
+                }
+            }
+        }
+
         const vines: Vine[] = []
 
         const initVines = () => {
@@ -253,6 +309,8 @@ export function VineBackground() {
 
         initVines()
 
+        const shootingStars: ShootingStar[] = []
+
         let time = 0
         let windStrength = 0
         let nextWindChange = 0
@@ -284,6 +342,21 @@ export function VineBackground() {
                 vine.update(wind)
                 vine.draw(ctx)
             })
+
+            // Spawn shooting star randomly
+            if (Math.random() < 0.005) { // adjustment for frequency
+                shootingStars.push(new ShootingStar(canvas.width, canvas.height))
+            }
+
+            // Update and draw shooting stars
+            for (let i = shootingStars.length - 1; i >= 0; i--) {
+                const star = shootingStars[i]
+                star.update()
+                star.draw(ctx)
+                if (star.life <= 0) {
+                    shootingStars.splice(i, 1)
+                }
+            }
 
             animationFrameId = requestAnimationFrame(render)
         }
