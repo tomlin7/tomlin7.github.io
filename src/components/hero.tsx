@@ -2,15 +2,15 @@
 
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { ArrowRight, Github, Linkedin, Twitter } from "lucide-react"
+import { ArrowRight, Github, Linkedin, Twitter, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { PixelBackground } from "@/components/pixel-background"
+import { VineBackground } from "@/components/vine-background"
 
 export function Hero() {
     return (
-        <section className="relative flex min-h-[90vh] flex-col items-center justify-center overflow-hidden py-12 md:py-24 lg:py-32 bg-transparent">
-            {/* Pixel Background */}
-            <PixelBackground />
+        <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden py-12 md:py-24 lg:py-32 bg-transparent">
+            {/* Vine Background */}
+            <VineBackground />
             <div className="absolute inset-0 bg-background/30 backdrop-blur-[1px] z-0 pointer-events-none" />
 
             <div className="container flex flex-col items-center px-4 text-center md:px-6 z-10">
@@ -69,6 +69,20 @@ export function Hero() {
                         <Twitter className="h-6 w-6" />
                         <span className="sr-only">Twitter</span>
                     </Link>
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                        delay: 1.5
+                    }}
+                    className="absolute bottom-8 left-1/2 -translate-x-1/2 text-muted-foreground"
+                >
+                    <ChevronDown className="h-8 w-8" />
                 </motion.div>
             </div>
         </section>

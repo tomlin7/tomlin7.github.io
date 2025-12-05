@@ -63,7 +63,7 @@ export function PixelBackground() {
                         // Map iter to a small alpha range for "dim/subtle" look
                         const brightness = iter / maxIter
                         const minAlpha = 0.01
-                        const maxAlpha = 0.10 // Adjusted slightly for visibility
+                        const maxAlpha = isDark ? 0.10 : 0.40 // Much darker (more opaque) for light mode
                         const alpha = minAlpha + (brightness * (maxAlpha - minAlpha))
 
                         // Dynamic opacity, same base color

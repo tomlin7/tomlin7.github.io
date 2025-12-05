@@ -10,7 +10,7 @@ export function Navbar() {
     const [isOpen, setIsOpen] = React.useState(false)
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <nav className="absolute top-0 left-0 right-0 z-50 bg-transparent">
             <div className="container mx-auto flex h-16 max-w-screen-2xl items-center justify-between px-4">
                 <div className="flex gap-6 md:gap-10">
                     <Link href="/" className="flex items-center space-x-2">
