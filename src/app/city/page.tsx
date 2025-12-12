@@ -2,146 +2,151 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
+import { Bug, Edit } from 'lucide-react';
 
-// --- Constants ---
 const TILE_SIZE = 8;
 const SCALE = 3;
 const ACTUAL_TILE_SIZE = TILE_SIZE * SCALE;
-const MAP_WIDTH = 55;
-const MAP_HEIGHT = 30;
+const TILEMAP_COLS = 24;
 
-// Extracted from sample-map.tmx
-// Layer 1: Terrain
-const LEVEL_1_DATA = [
-    45, 45, 45, 241, 242, 243, 244, 45, 246, 247, 248, 249, 45, 251, 252, 253, 254, 46, 289, 290, 297, 44, 45, 51, 3, 51, 3, 3, 27, 3, 36, 26, 40, 40, 40, 40, 40, 40, 40, 40, 40, 44, 46, 289, 290, 291, 44, 46, 1, 1, 1, 25, 1, 1, 1, 1,
-    45, 52, 45, 45, 45, 45, 45, 45, 52, 28, 45, 45, 45, 45, 28, 45, 45, 46, 289, 290, 297, 44, 45, 3, 3, 51, 3, 136, 137, 138, 36, 40, 50, 26, 26, 40, 40, 40, 40, 40, 44, 71, 289, 290, 291, 72, 46, 1, 25, 1, 1, 1, 1, 1, 1,
-    69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 70, 289, 290, 297, 44, 45, 3, 3, 3, 3, 160, 161, 162, 36, 40, 26, 40, 40, 40, 40, 40, 40, 40, 44, 46, 289, 343, 291, 44, 46, 1, 1, 49, 49, 1, 1, 1, 49,
-    266, 266, 270, 266, 266, 266, 266, 266, 266, 266, 266, 266, 266, 266, 266, 270, 266, 266, 293, 290, 297, 44, 45, 3, 3, 3, 3, 193, 242, 244, 36, 50, 40, 40, 40, 40, 40, 56, 40, 40, 44, 46, 337, 338, 339, 44, 46, 1, 1, 49, 1, 1, 1, 1, 1,
-    290, 290, 294, 290, 290, 290, 290, 290, 290, 290, 290, 290, 290, 290, 290, 294, 290, 343, 290, 290, 297, 72, 45, 35, 35, 35, 27, 35, 61, 35, 36, 40, 40, 40, 40, 40, 40, 40, 40, 40, 44, 46, 289, 290, 291, 44, 46, 1, 1, 1, 25, 1, 1, 1, 1,
-    314, 314, 318, 314, 314, 314, 314, 314, 314, 314, 314, 314, 314, 314, 314, 318, 314, 314, 269, 290, 297, 44, 52, 35, 142, 143, 144, 35, 13, 59, 60, 97, 98, 99, 100, 40, 40, 40, 56, 40, 44, 71, 289, 290, 291, 72, 47, 107, 108, 109, 109, 110, 49, 1, 1,
-    108, 109, 110, 21, 21, 21, 21, 102, 103, 104, 105, 21, 21, 21, 21, 21, 21, 22, 289, 290, 297, 44, 45, 35, 166, 167, 168, 35, 36, 40, 20, 121, 122, 123, 124, 21, 102, 103, 104, 105, 48, 46, 289, 343, 291, 44, 45, 131, 87, 133, 87, 134, 21, 21, 21,
-    132, 133, 134, 67, 67, 67, 67, 126, 127, 82, 129, 67, 97, 98, 99, 100, 45, 46, 289, 290, 297, 44, 45, 35, 208, 257, 259, 62, 36, 26, 44, 145, 146, 147, 148, 45, 126, 127, 128, 129, 52, 46, 289, 290, 291, 44, 52, 155, 156, 157, 157, 158, 109, 110, 45,
-    156, 157, 158, 40, 40, 40, 40, 150, 151, 152, 153, 40, 121, 122, 123, 124, 45, 71, 289, 290, 297, 72, 45, 35, 35, 61, 35, 35, 36, 56, 44, 179, 180, 181, 182, 45, 150, 151, 152, 153, 45, 46, 289, 290, 291, 44, 45, 179, 181, 181, 181, 182, 133, 134, 45,
-    181, 181, 182, 1, 102, 103, 103, 184, 185, 189, 187, 1, 121, 122, 122, 124, 45, 46, 289, 290, 297, 44, 45, 35, 35, 35, 35, 35, 36, 40, 44, 179, 180, 181, 182, 45, 261, 261, 261, 261, 45, 71, 289, 290, 291, 72, 45, 179, 263, 181, 181, 182, 157, 158, 45,
-    181, 181, 182, 1, 126, 127, 127, 184, 186, 185, 187, 49, 145, 146, 147, 148, 52, 46, 289, 290, 297, 44, 28, 27, 51, 35, 35, 35, 36, 40, 44, 203, 204, 205, 206, 45, 198, 199, 200, 201, 45, 46, 289, 290, 291, 44, 45, 203, 204, 205, 205, 206, 205, 206, 52,
-    204, 205, 206, 45, 150, 151, 151, 232, 234, 233, 235, 45, 263, 263, 263, 263, 45, 46, 337, 338, 297, 44, 45, 21, 21, 21, 21, 21, 21, 97, 98, 98, 98, 100, 45, 52, 45, 28, 45, 45, 45, 46, 337, 338, 339, 44, 45, 45, 28, 45, 45, 45, 45, 45, 45,
-    45, 45, 45, 28, 256, 258, 258, 256, 257, 258, 259, 45, 246, 247, 200, 201, 45, 71, 289, 290, 297, 68, 69, 69, 69, 69, 69, 69, 69, 121, 122, 122, 77, 124, 69, 69, 69, 69, 69, 69, 69, 70, 289, 290, 291, 68, 69, 69, 69, 69, 69, 69, 69, 69, 69,
-    69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 70, 289, 290, 297, 266, 266, 266, 266, 266, 266, 266, 266, 121, 122, 123, 122, 124, 266, 266, 270, 266, 266, 266, 266, 266, 293, 290, 292, 266, 266, 344, 344, 270, 266, 266, 266, 266, 266,
-    266, 266, 266, 266, 266, 266, 266, 266, 266, 266, 266, 266, 266, 266, 266, 270, 266, 266, 293, 290, 297, 290, 290, 102, 103, 103, 104, 105, 290, 145, 146, 146, 146, 148, 290, 290, 294, 290, 290, 290, 343, 290, 290, 290, 290, 290, 290, 290, 290, 294, 290, 343, 290, 290, 290,
-    343, 290, 290, 290, 290, 290, 290, 290, 290, 290, 290, 290, 290, 290, 290, 294, 290, 290, 290, 290, 297, 314, 314, 126, 82, 127, 82, 129, 314, 169, 171, 170, 171, 172, 314, 314, 318, 314, 314, 314, 314, 314, 314, 314, 314, 314, 314, 314, 314, 318, 269, 290, 268, 314, 314,
-    272, 272, 272, 272, 272, 272, 272, 272, 272, 272, 272, 272, 272, 272, 272, 272, 272, 272, 272, 272, 321, 20, 21, 150, 151, 151, 152, 153, 21, 169, 219, 219, 219, 172, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 22, 289, 290, 291, 20, 21,
-    21, 21, 21, 21, 21, 22, 289, 290, 291, 20, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 48, 45, 261, 261, 261, 261, 261, 28, 169, 171, 170, 171, 172, 45, 45, 45, 45, 52, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 46, 337, 338, 339, 44, 45,
-    45, 45, 45, 28, 45, 46, 289, 290, 291, 44, 46, 67, 66, 67, 67, 67, 67, 44, 46, 67, 67, 67, 44, 246, 247, 248, 248, 249, 45, 193, 194, 195, 195, 196, 45, 23, 69, 69, 69, 69, 24, 23, 69, 69, 69, 69, 69, 69, 24, 46, 289, 290, 291, 44, 45,
-    67, 66, 67, 67, 44, 46, 289, 290, 291, 44, 46, 26, 40, 40, 40, 40, 40, 44, 46, 40, 40, 26, 44, 52, 28, 45, 45, 45, 45, 45, 28, 45, 45, 45, 45, 46, 67, 67, 67, 67, 44, 46, 67, 67, 66, 67, 67, 67, 44, 71, 289, 290, 291, 72, 45,
-    2, 2, 50, 40, 44, 46, 337, 338, 339, 44, 46, 40, 40, 40, 40, 26, 26, 68, 70, 26, 26, 40, 68, 24, 45, 45, 46, 45, 45, 45, 52, 45, 45, 45, 45, 46, 40, 50, 40, 40, 44, 46, 40, 40, 40, 40, 40, 40, 44, 46, 289, 290, 291, 44, 45,
-    40, 2, 2, 40, 44, 71, 289, 290, 291, 72, 46, 26, 40, 40, 40, 40, 40, 67, 67, 40, 26, 40, 67, 44, 45, 45, 46, 45, 45, 45, 45, 45, 45, 45, 45, 46, 50, 2, 40, 40, 68, 70, 40, 40, 40, 50, 40, 40, 44, 46, 289, 343, 291, 44, 52,
-    40, 26, 40, 26, 44, 46, 289, 290, 291, 44, 46, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 68, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 70, 40, 40, 40, 40, 67, 67, 40, 40, 40, 40, 40, 40, 44, 46, 289, 290, 291, 44, 45,
-    40, 40, 2, 2, 44, 46, 289, 290, 291, 44, 47, 21, 21, 21, 21, 21, 22, 40, 40, 40, 40, 40, 26, 67, 67, 67, 67, 67, 67, 67, 66, 67, 67, 67, 67, 67, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 44, 71, 289, 290, 291, 72, 45,
-    40, 40, 2, 50, 44, 46, 289, 290, 291, 44, 45, 107, 108, 109, 109, 110, 46, 50, 40, 40, 40, 40, 40, 50, 26, 2, 40, 2, 50, 40, 40, 40, 40, 40, 40, 40, 40, 2, 2, 40, 40, 40, 2, 50, 40, 40, 40, 40, 44, 46, 289, 290, 291, 44, 45,
-    40, 40, 2, 26, 44, 71, 289, 290, 291, 72, 45, 131, 87, 133, 87, 134, 46, 26, 50, 40, 40, 40, 40, 40, 40, 40, 50, 26, 2, 40, 26, 40, 40, 40, 40, 40, 26, 10, 11, 11, 11, 11, 11, 12, 40, 2, 40, 40, 44, 46, 337, 338, 339, 44, 45,
-    40, 40, 40, 40, 44, 46, 289, 290, 291, 44, 45, 155, 156, 157, 157, 158, 46, 2, 26, 40, 40, 40, 10, 11, 11, 11, 11, 11, 12, 26, 40, 50, 40, 40, 50, 50, 50, 34, 35, 35, 35, 35, 51, 36, 40, 2, 26, 40, 44, 46, 344, 344, 344, 44, 45,
-    40, 26, 40, 40, 44, 46, 289, 290, 291, 44, 45, 174, 224, 224, 224, 177, 46, 26, 40, 50, 26, 40, 34, 35, 35, 35, 35, 51, 36, 40, 40, 40, 40, 40, 2, 2, 2, 34, 35, 27, 35, 35, 35, 37, 11, 11, 11, 11, 44, 71, 289, 290, 291, 72, 45,
-    40, 50, 40, 40, 44, 46, 289, 290, 291, 44, 45, 198, 248, 248, 247, 201, 46, 26, 40, 40, 40, 40, 34, 35, 27, 35, 35, 35, 37, 11, 11, 11, 11, 11, 11, 11, 11, 38, 51, 35, 27, 35, 35, 35, 35, 35, 35, 35, 44, 46, 289, 290, 291, 44, 45,
-    40, 40, 40, 40, 44, 71, 289, 290, 291, 72, 45, 45, 45, 52, 28, 45, 46, 40, 50, 40, 10, 11, 38, 51, 35, 27, 35, 35, 35, 35, 51, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 44, 46, 289, 290, 291, 44, 45
-];
-
-// Layer 2: Objects
-const LEVEL_2_DATA = [
-    0, 0, 312, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 329, 0, 0, 0, 0, 0, 0, 0, 112, 113, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 287, 0,
-    0, 0, 336, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 353, 0, 0, 0, 0, 0, 264, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 281, 0, 0, 0, 0, 0, 0, 0, 0, 311, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 356, 0, 0, 0, 0, 0, 0, 0, 311, 0, 0, 288, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 305, 0, 0, 0, 0, 0, 0, 0, 0, 335, 0, 0, 0,
-    0, 0, 324, 325, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 300, 301, 0, 0, 0, 0, 335, 0, 0, 95, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 240, 0, 0, 0, 0, 311, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 278, 279, 0, 278, 279, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 94, 119, 120, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 328, 0, 0, 0, 0, 0, 0, 0, 0, 335, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 352, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 311, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 284, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 281, 0, 0, 0, 335, 0, 0, 0, 0, 264, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 305, 330, 0, 0, 0, 0, 0, 0, 0, 288, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 312, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 360, 0, 0, 354, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 282, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 336, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 332, 0, 0, 0, 0, 240, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 306, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 280, 0, 0, 0, 0, 264, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 308, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 304, 0, 0, 0, 0, 288, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 284, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 276, 277, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 276, 277, 0, 0, 0, 0, 0, 0, 0, 0, 324, 325, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 302, 303, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 302, 303, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 312, 0, 0, 0, 312, 0, 0, 0, 312, 0, 0, 0, 312, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 264, 0, 0, 0, 0, 0, 0, 0, 0, 264, 0, 0, 348, 349, 350, 351, 0, 264, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 336, 0, 0, 0, 336, 0, 0, 0, 336, 0, 0, 0, 336, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 288, 0, 0, 0, 0, 0, 0, 0, 287, 288, 0, 0, 0, 0, 0, 0, 0, 288, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 213, 215, 214, 214, 215, 216, 0, 0, 0, 0, 0, 0, 332,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 328, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 287, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 352, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 302, 303, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 278, 279, 287, 0, 0, 0, 0, 0, 0, 240, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 281, 0, 0, 0, 359,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 264, 0, 264, 0, 264, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 305, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 288, 0, 288, 0, 288, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 264, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 282, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 264, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 288, 264, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 306, 0, 0, 0, 359,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 288, 0, 264, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 288, 0, 287, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 288, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 264, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 264, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 287, 0, 288, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 288, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 359
-];
-
-const DRIVABLE_TILES = new Set([
-    40, 26, 50, 2, 44, 46, 67, 68, 69, 70, 71, 72, 289, 290, 291, 337, 338, 339, 340, 341, 342, 343, 344
-]);
-
-// Car interface
-interface Car {
+interface EntityConfig {
     id: number;
-    x: number; // Pixel coordinates relative to map
+    type: 'car' | 'train';
+    right: number[];
+    left: number[];
+    up: number[];
+    down: number[];
+}
+
+interface LevelData {
+    width: number;
+    height: number;
+    tileSize: number;
+    layers: { name: string; data: number[] }[];
+    drivable: number[];
+    walkable: number[];
+    entityConfigs?: EntityConfig[];
+}
+
+interface Entity {
+    id: number;
+    x: number;
     y: number;
     targetX: number;
     targetY: number;
     speed: number;
     color: string;
+    vx: number;
+    vy: number;
+    config?: EntityConfig;
+    isPedestrian?: boolean;
 }
 
 export default function CityPage() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [levelData, setLevelData] = useState<LevelData | null>(null);
     const [tilemap, setTilemap] = useState<HTMLImageElement | null>(null);
-    const carsRef = useRef<Car[]>([]);
+
+    // Game State
+    const carsRef = useRef<Entity[]>([]);
+    const pedestriansRef = useRef<Entity[]>([]);
     const requestRef = useRef<number>();
 
     const [hoveredTile, setHoveredTile] = useState<number | null>(null);
     const [showDrivable, setShowDrivable] = useState(false);
 
-    // Load tilemap
     useEffect(() => {
         const img = new Image();
         img.src = '/city/tilemap_packed.png';
         img.onload = () => setTilemap(img);
+
+        fetch('/city/data.json')
+            .then(res => res.json())
+            .then(data => setLevelData(data))
+            .catch(err => console.error("Failed to load map data", err));
     }, []);
 
-    // Initialize cars
+    // Initialize Simulation
     useEffect(() => {
-        const spawnPoints: { x: number, y: number }[] = [];
-        LEVEL_1_DATA.forEach((tileId, index) => {
-            if (DRIVABLE_TILES.has(tileId)) {
-                const x = (index % MAP_WIDTH) * ACTUAL_TILE_SIZE;
-                const y = Math.floor(index / MAP_WIDTH) * ACTUAL_TILE_SIZE;
-                spawnPoints.push({ x, y });
+        if (!levelData) return;
+
+        // --- Cars ---
+        const carConfigs = levelData.entityConfigs?.filter(e => e.type === 'car') || [];
+        const carSpawnPoints: { x: number, y: number }[] = [];
+        levelData.drivable.forEach((flag, index) => {
+            if (flag === 1) {
+                const x = (index % levelData.width) * ACTUAL_TILE_SIZE;
+                const y = Math.floor(index / levelData.width) * ACTUAL_TILE_SIZE;
+                carSpawnPoints.push({ x, y });
             }
         });
 
-        const newCars: Car[] = [];
-        for (let i = 0; i < 40; i++) {
-            if (spawnPoints.length > 0) {
-                const spawn = spawnPoints[Math.floor(Math.random() * spawnPoints.length)];
-                newCars.push({
-                    id: i,
-                    x: spawn.x + ACTUAL_TILE_SIZE / 2,
-                    y: spawn.y + ACTUAL_TILE_SIZE / 2,
-                    targetX: spawn.x + ACTUAL_TILE_SIZE / 2,
-                    targetY: spawn.y + ACTUAL_TILE_SIZE / 2,
-                    speed: 1 + Math.random(),
-                    color: `hsl(${Math.random() * 360}, 80%, 50%)`
-                });
+        const newCars: Entity[] = [];
+        if (carConfigs.length > 0) {
+            for (let i = 0; i < 40; i++) {
+                if (carSpawnPoints.length > 0) {
+                    const spawn = carSpawnPoints[Math.floor(Math.random() * carSpawnPoints.length)];
+                    const randomConfig = carConfigs[Math.floor(Math.random() * carConfigs.length)];
+
+                    // Simple hack to avoid stacking spawns too much
+                    const tooClose = newCars.some(c => Math.hypot(c.x - spawn.x, c.y - spawn.y) < ACTUAL_TILE_SIZE);
+                    if (!tooClose) {
+                        newCars.push({
+                            id: i,
+                            x: spawn.x + ACTUAL_TILE_SIZE / 2,
+                            y: spawn.y + ACTUAL_TILE_SIZE / 2,
+                            targetX: spawn.x + ACTUAL_TILE_SIZE / 2,
+                            targetY: spawn.y + ACTUAL_TILE_SIZE / 2,
+                            speed: 0.5 + Math.random() * 1.5,
+                            color: `hsl(${Math.random() * 360}, 85%, 60%)`,
+                            vx: 0,
+                            vy: 0,
+                            config: randomConfig
+                        });
+                    }
+                }
             }
         }
         carsRef.current = newCars;
-    }, []);
 
-    // Simulation loop
+        // --- Pedestrians ---
+        const pedSpawnPoints: { x: number, y: number }[] = [];
+        levelData.walkable.forEach((flag, index) => {
+            if (flag === 1) {
+                const x = (index % levelData.width) * ACTUAL_TILE_SIZE;
+                const y = Math.floor(index / levelData.width) * ACTUAL_TILE_SIZE;
+                pedSpawnPoints.push({ x, y });
+            }
+        });
+
+        const newPeds: Entity[] = [];
+        for (let i = 0; i < 50; i++) {
+            if (pedSpawnPoints.length > 0) {
+                const spawn = pedSpawnPoints[Math.floor(Math.random() * pedSpawnPoints.length)];
+                const offsetX = (Math.random() - 0.5) * (ACTUAL_TILE_SIZE * 0.5);
+                const offsetY = (Math.random() - 0.5) * (ACTUAL_TILE_SIZE * 0.5);
+
+                newPeds.push({
+                    id: i + 1000,
+                    x: spawn.x + ACTUAL_TILE_SIZE / 2 + offsetX,
+                    y: spawn.y + ACTUAL_TILE_SIZE / 2 + offsetY,
+                    targetX: spawn.x + ACTUAL_TILE_SIZE / 2 + offsetX,
+                    targetY: spawn.y + ACTUAL_TILE_SIZE / 2 + offsetY,
+                    speed: 0.2 + Math.random() * 0.3,
+                    color: `hsl(${Math.random() * 360}, 60%, 70%)`,
+                    vx: 0,
+                    vy: 0,
+                    isPedestrian: true
+                });
+            }
+        }
+        pedestriansRef.current = newPeds;
+
+    }, [levelData]);
+
+    // Simulation Loop
     useEffect(() => {
-        if (!tilemap) return;
+        if (!tilemap || !levelData) return;
 
         const loop = () => {
             const canvas = canvasRef.current;
@@ -149,95 +154,149 @@ export default function CityPage() {
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
-            // Update cars
-            carsRef.current.forEach(car => {
-                const dx = car.targetX - car.x;
-                const dy = car.targetY - car.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+            // --- Update Cars with Collision Detection ---
+            const cars = carsRef.current;
+            for (let i = 0; i < cars.length; i++) {
+                const car = cars[i];
+                let shouldMove = true;
 
-                if (dist < car.speed) {
-                    car.x = car.targetX;
-                    car.y = car.targetY;
+                // Check for car in front
+                if (car.vx !== 0 || car.vy !== 0) {
+                    // Look ahead distance
+                    const lookAhead = ACTUAL_TILE_SIZE * 1.5;
+                    const projX = car.x + Math.sign(car.vx) * lookAhead;
+                    const projY = car.y + Math.sign(car.vy) * lookAhead;
 
-                    const gx = Math.floor(car.x / ACTUAL_TILE_SIZE);
-                    const gy = Math.floor(car.y / ACTUAL_TILE_SIZE);
+                    for (let j = 0; j < cars.length; j++) {
+                        if (i === j) continue;
+                        const other = cars[j];
+                        const dist = Math.hypot(projX - other.x, projY - other.y);
 
-                    const directions = [
-                        { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
-                        { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
-                    ];
-
-                    const validNeighbors: { x: number, y: number }[] = [];
-                    for (const dir of directions) {
-                        const nx = gx + dir.dx;
-                        const ny = gy + dir.dy;
-
-                        if (nx >= 0 && nx < MAP_WIDTH && ny >= 0 && ny < MAP_HEIGHT) {
-                            const tileId = LEVEL_1_DATA[ny * MAP_WIDTH + nx];
-                            if (DRIVABLE_TILES.has(tileId)) {
-                                validNeighbors.push({
-                                    x: nx * ACTUAL_TILE_SIZE + ACTUAL_TILE_SIZE / 2,
-                                    y: ny * ACTUAL_TILE_SIZE + ACTUAL_TILE_SIZE / 2
-                                });
-                            }
+                        // If another car is close in our projected path, STOP.
+                        if (dist < ACTUAL_TILE_SIZE) {
+                            shouldMove = false;
+                            break;
                         }
                     }
-
-                    if (validNeighbors.length > 0) {
-                        const next = validNeighbors[Math.floor(Math.random() * validNeighbors.length)];
-                        car.targetX = next.x;
-                        car.targetY = next.y;
-                    }
-                } else {
-                    car.x += (dx / dist) * car.speed;
-                    car.y += (dy / dist) * car.speed;
                 }
+
+                if (shouldMove) {
+                    updateEntity(car, levelData.drivable, levelData.width, levelData.height);
+                }
+            }
+
+            // --- Update Pedestrians (No collision for now) ---
+            pedestriansRef.current.forEach(ped => {
+                updateEntity(ped, levelData.walkable, levelData.width, levelData.height, true);
             });
 
             // Render
-            ctx.fillStyle = '#18181b'; // zinc-900
+            ctx.fillStyle = '#18181b';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.imageSmoothingEnabled = false;
 
-            // Draw map
-            const drawLayer = (data: number[]) => {
-                for (let i = 0; i < data.length; i++) {
-                    const tileId = data[i];
+            // Draw Map Layers
+            levelData.layers.forEach((layer) => {
+                for (let i = 0; i < layer.data.length; i++) {
+                    const tileId = layer.data[i];
                     if (tileId === 0) continue;
 
-                    const x = (i % MAP_WIDTH) * ACTUAL_TILE_SIZE;
-                    const y = Math.floor(i / MAP_WIDTH) * ACTUAL_TILE_SIZE;
+                    const x = (i % levelData.width) * ACTUAL_TILE_SIZE;
+                    const y = Math.floor(i / levelData.width) * ACTUAL_TILE_SIZE;
 
                     const sheetIndex = tileId - 1;
-                    const sheetCols = 24;
-                    const sx = (sheetIndex % sheetCols) * TILE_SIZE;
-                    const sy = Math.floor(sheetIndex / sheetCols) * TILE_SIZE;
+                    const sx = (sheetIndex % TILEMAP_COLS) * TILE_SIZE;
+                    const sy = Math.floor(sheetIndex / TILEMAP_COLS) * TILE_SIZE;
 
                     ctx.drawImage(
                         tilemap,
                         sx, sy, TILE_SIZE, TILE_SIZE,
                         x, y, ACTUAL_TILE_SIZE, ACTUAL_TILE_SIZE
                     );
+                }
+            });
 
-                    if (showDrivable && DRIVABLE_TILES.has(tileId) && data === LEVEL_1_DATA) {
-                        ctx.fillStyle = 'rgba(0, 255, 100, 0.2)';
+            // Debug Layers
+            if (showDrivable) {
+                ctx.fillStyle = 'rgba(0, 255, 100, 0.15)';
+                levelData.drivable.forEach((flag, i) => {
+                    if (flag) {
+                        const x = (i % levelData.width) * ACTUAL_TILE_SIZE;
+                        const y = Math.floor(i / levelData.width) * ACTUAL_TILE_SIZE;
                         ctx.fillRect(x, y, ACTUAL_TILE_SIZE, ACTUAL_TILE_SIZE);
                     }
-                }
-            };
+                });
 
-            drawLayer(LEVEL_1_DATA);
-            drawLayer(LEVEL_2_DATA);
+                ctx.fillStyle = 'rgba(0, 100, 255, 0.15)';
+                levelData.walkable.forEach((flag, i) => {
+                    if (flag) {
+                        const x = (i % levelData.width) * ACTUAL_TILE_SIZE;
+                        const y = Math.floor(i / levelData.width) * ACTUAL_TILE_SIZE;
+                        ctx.fillRect(x, y, ACTUAL_TILE_SIZE, ACTUAL_TILE_SIZE);
+                    }
+                });
+            }
 
             // Draw Cars
             carsRef.current.forEach(car => {
+                if (!car.config) return;
+
+                let tiles: number[] = [];
+                let isVertical = false;
+
+                if (Math.abs(car.vy) > Math.abs(car.vx)) {
+                    isVertical = true;
+                    if (car.vy > 0) tiles = car.config.down; // Down
+                    else tiles = car.config.up; // Up
+                } else {
+                    if (car.vx < 0) tiles = car.config.left;
+                    else tiles = car.config.right;
+                }
+
+                if (tiles.every(t => t === 0)) return;
+
+                const tileCount = tiles.length;
+                const totalLength = tileCount * ACTUAL_TILE_SIZE;
+
+                const startX = car.x - (isVertical ? ACTUAL_TILE_SIZE / 2 : totalLength / 2);
+                const startY = car.y - (isVertical ? totalLength / 2 : ACTUAL_TILE_SIZE / 2);
+
+                tiles.forEach((tid, idx) => {
+                    if (tid === 0) return;
+
+                    const sheetIndex = tid - 1;
+                    const sx = (sheetIndex % TILEMAP_COLS) * TILE_SIZE;
+                    const sy = Math.floor(sheetIndex / TILEMAP_COLS) * TILE_SIZE;
+
+                    let drawX = startX;
+                    let drawY = startY;
+
+                    if (isVertical) {
+                        drawY += idx * ACTUAL_TILE_SIZE;
+                    } else {
+                        drawX += idx * ACTUAL_TILE_SIZE;
+                    }
+
+                    ctx.drawImage(
+                        tilemap,
+                        sx, sy, TILE_SIZE, TILE_SIZE,
+                        drawX, drawY,
+                        ACTUAL_TILE_SIZE, ACTUAL_TILE_SIZE
+                    );
+                });
+            });
+
+            // Draw Pedestrians
+            pedestriansRef.current.forEach(ped => {
+                ctx.fillStyle = 'white';
                 ctx.beginPath();
-                ctx.fillStyle = car.color;
-                ctx.arc(car.x, car.y, Scale(2), 0, Math.PI * 2);
+                ctx.arc(ped.x, ped.y, SCALE, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-                ctx.lineWidth = 1;
-                ctx.stroke();
+
+                ctx.fillStyle = ped.color;
+                ctx.beginPath();
+                ctx.arc(ped.x, ped.y, SCALE * 0.6, 0, Math.PI * 2);
+                ctx.fill();
             });
 
             requestRef.current = requestAnimationFrame(loop);
@@ -247,57 +306,142 @@ export default function CityPage() {
         return () => {
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
         };
-    }, [tilemap, showDrivable]);
+    }, [tilemap, levelData, showDrivable]);
+
+    if (!levelData) return (
+        <div className="h-screen w-screen bg-zinc-950 flex items-center justify-center text-zinc-400 font-mono">
+            Loading City Data...
+        </div>
+    );
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-white p-8 font-sans">
-            <div className="max-w-7xl mx-auto">
-                <header className="mb-6 flex justify-between items-center">
-                    <div>
-                        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
-                            Pico-8 City
-                        </h1>
-                        <p className="text-zinc-400 mt-2">Traffic AI Simulation</p>
-                    </div>
-                    <div className="flex gap-4">
-                        <button
-                            onClick={() => setShowDrivable(!showDrivable)}
-                            className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition border border-zinc-700 text-sm font-medium"
-                        >
-                            {showDrivable ? 'Hide' : 'Show'} Debug Layer
-                        </button>
-                        <div className="px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-sm font-mono text-zinc-400">
-                            Tile ID: <span className="text-white">{hoveredTile ?? '-'}</span>
-                        </div>
-                    </div>
-                </header>
+        <div className="h-screen w-screen bg-zinc-950 overflow-hidden relative font-sans">
+            <Head>
+                <title>City Simulation</title>
+            </Head>
 
-                <div className="relative overflow-auto border border-zinc-800 rounded-xl shadow-2xl bg-zinc-900">
-                    <canvas
-                        ref={canvasRef}
-                        width={MAP_WIDTH * ACTUAL_TILE_SIZE}
-                        height={MAP_HEIGHT * ACTUAL_TILE_SIZE}
-                        className="block"
-                        onMouseMove={(e) => {
-                            const rect = canvasRef.current?.getBoundingClientRect();
-                            if (rect) {
-                                const x = e.clientX - rect.left;
-                                const y = e.clientY - rect.top;
-                                const gx = Math.floor(x / ACTUAL_TILE_SIZE);
-                                const gy = Math.floor(y / ACTUAL_TILE_SIZE);
-                                const index = gy * MAP_WIDTH + gx;
-                                if (index >= 0 && index < LEVEL_1_DATA.length) {
-                                    setHoveredTile(LEVEL_1_DATA[index]);
-                                }
-                            }
-                        }}
-                    />
+            {/* HUD / Controls */}
+            <div className="absolute top-4 right-4 z-50 flex items-center gap-3">
+                {/* Tile Info */}
+                <div className="px-3 py-1.5 rounded-lg bg-zinc-900/90 backdrop-blur border border-zinc-800 text-xs font-mono text-zinc-400 shadow-xl">
+                    Tile ID: <span className="text-white">{hoveredTile ?? '-'}</span>
                 </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowDrivable(!showDrivable)}
+                        className={`p-2 rounded-lg transition border shadow-xl ${showDrivable
+                            ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400'
+                            : 'bg-zinc-900/90 hover:bg-zinc-800 border-zinc-800 text-zinc-400'
+                            }`}
+                        title="Toggle Debug Layer"
+                    >
+                        <Bug className="w-5 h-5" />
+                    </button>
+
+                    <a
+                        href="/city/editor"
+                        className="p-2 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 transition shadow-xl"
+                        title="Open Editor"
+                    >
+                        <Edit className="w-5 h-5" />
+                    </a>
+                </div>
+            </div>
+
+            {/* Viewport */}
+            <div className="w-full h-full overflow-auto flex items-center justify-center bg-[#101012]">
+                <canvas
+                    ref={canvasRef}
+                    width={levelData.width * ACTUAL_TILE_SIZE}
+                    height={levelData.height * ACTUAL_TILE_SIZE}
+                    className="block shadow-2xl bg-[#000]"
+                    onMouseMove={(e) => {
+                        if (!levelData || !canvasRef.current) return;
+                        const rect = canvasRef.current.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        const gx = Math.floor(x / ACTUAL_TILE_SIZE);
+                        const gy = Math.floor(y / ACTUAL_TILE_SIZE);
+                        const index = gy * levelData.width + gx;
+                        if (levelData.layers[0] && index >= 0 && index < levelData.layers[0].data.length) {
+                            setHoveredTile(levelData.layers[0].data[index]);
+                        }
+                    }}
+                />
             </div>
         </div>
     );
 }
 
-function Scale(val: number) {
-    return val * (SCALE / 2);
+// Shared update logic for Entity (Car/Pedestrian)
+function updateEntity(entity: Entity, mask: number[], width: number, height: number, isPedestrian = false) {
+    const dx = entity.targetX - entity.x;
+    const dy = entity.targetY - entity.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < entity.speed) {
+        // Reached target, decide next move
+        entity.x = entity.targetX;
+        entity.y = entity.targetY;
+
+        const gx = Math.floor(entity.x / ACTUAL_TILE_SIZE);
+        const gy = Math.floor(entity.y / ACTUAL_TILE_SIZE);
+
+        const potentialMoves = [
+            { dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
+        ];
+
+        const validNeighbors = potentialMoves.filter(move => {
+            const nx = gx + move.dx;
+            const ny = gy + move.dy;
+            if (nx < 0 || nx >= width || ny < 0 || ny >= height) return false;
+            return mask[ny * width + nx] === 1;
+        });
+
+        if (validNeighbors.length > 0) {
+            let chosenMove;
+
+            if (isPedestrian) {
+                // Pedestrians wander randomly
+                chosenMove = validNeighbors[Math.floor(Math.random() * validNeighbors.length)];
+            } else {
+                // Cars avoid U-turns and dead ends if possible
+                if (entity.vx === 0 && entity.vy === 0) {
+                    chosenMove = validNeighbors[Math.floor(Math.random() * validNeighbors.length)];
+                } else {
+                    const forwardMoves = validNeighbors.filter(move => {
+                        const curDx = Math.sign(entity.vx);
+                        const curDy = Math.sign(entity.vy);
+                        return !(move.dx === -curDx && move.dy === -curDy);
+                    });
+                    if (forwardMoves.length > 0) {
+                        chosenMove = forwardMoves[Math.floor(Math.random() * forwardMoves.length)];
+                    } else {
+                        chosenMove = validNeighbors[0];
+                    }
+                }
+            }
+
+            if (chosenMove) {
+                const offset = isPedestrian ? (ACTUAL_TILE_SIZE * 0.4) : (ACTUAL_TILE_SIZE / 2);
+                let jitterX = 0;
+                let jitterY = 0;
+                if (isPedestrian) {
+                    jitterX = (Math.random() - 0.5) * (ACTUAL_TILE_SIZE * 0.5);
+                    jitterY = (Math.random() - 0.5) * (ACTUAL_TILE_SIZE * 0.5);
+                }
+
+                entity.targetX = (gx + chosenMove.dx) * ACTUAL_TILE_SIZE + ACTUAL_TILE_SIZE / 2 + jitterX;
+                entity.targetY = (gy + chosenMove.dy) * ACTUAL_TILE_SIZE + ACTUAL_TILE_SIZE / 2 + jitterY;
+                entity.vx = chosenMove.dx;
+                entity.vy = chosenMove.dy;
+            }
+        }
+    } else {
+        // Keep moving towards target
+        entity.x += (dx / dist) * entity.speed;
+        entity.y += (dy / dist) * entity.speed;
+    }
 }
