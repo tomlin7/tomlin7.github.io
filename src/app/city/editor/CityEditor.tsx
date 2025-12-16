@@ -1,6 +1,11 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import {
+    Save, Grid, Layers, MousePointer, Car, Footprints,
+    Box, Eraser, Minus, Plus, ChevronRight, ChevronLeft,
+    Check, X, Eye, EyeOff
+} from 'lucide-react';
 
 const TILE_SIZE = 8;
 const SCALE = 3;
@@ -47,16 +52,15 @@ export default function CityEditor() {
     const [hoverPos, setHoverPos] = useState<{ x: number, y: number } | null>(null);
 
     // Palette Zoom State
-    const [paletteZoom, setPaletteZoom] = useState(2); // Start at 2x
+    const [paletteZoom, setPaletteZoom] = useState(2);
 
-    // Sidebar Resize State
-    const [sidebarWidth, setSidebarWidth] = useState(380);
-    const [isResizingSidebar, setIsResizingSidebar] = useState(false);
+    // Sidebar State
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     const [entityConfigs, setEntityConfigs] = useState<EntityConfig[]>([]);
 
     const lastGridPosRef = useRef<{ x: number, y: number } | null>(null);
-    const lastDirectionRef = useRef<number>(1); // Default UP
+    const lastDirectionRef = useRef<number>(1);
 
     useEffect(() => {
         const img = new Image();
@@ -70,13 +74,12 @@ export default function CityEditor() {
                 if (data.entityConfigs) {
                     setEntityConfigs(data.entityConfigs);
                 } else {
-                    const defaults: EntityConfig[] = [
+                    setEntityConfigs([
                         { id: 0, type: 'car', right: [0, 0], left: [0, 0], up: [0, 0], down: [0, 0] },
                         { id: 1, type: 'car', right: [0, 0], left: [0, 0], up: [0, 0], down: [0, 0] },
                         { id: 2, type: 'car', right: [0, 0], left: [0, 0], up: [0, 0], down: [0, 0] },
                         { id: 3, type: 'train', right: [0, 0, 0, 0], left: [0, 0, 0, 0], up: [0, 0, 0, 0], down: [0, 0, 0, 0] },
-                    ];
-                    setEntityConfigs(defaults);
+                    ]);
                 }
             })
             .catch(err => console.error('Failed to load level data:', err));
@@ -87,30 +90,6 @@ export default function CityEditor() {
             setLevelData(prev => prev ? ({ ...prev, entityConfigs }) : null);
         }
     }, [entityConfigs]);
-
-    // Handle Sidebar Resize
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            if (isResizingSidebar) {
-                setSidebarWidth(Math.max(200, Math.min(800, e.clientX)));
-            }
-        };
-
-        const handleMouseUp = () => {
-            setIsResizingSidebar(false);
-            document.body.style.cursor = 'default';
-        };
-
-        if (isResizingSidebar) {
-            window.addEventListener('mousemove', handleMouseMove);
-            window.addEventListener('mouseup', handleMouseUp);
-        }
-
-        return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
-        };
-    }, [isResizingSidebar]);
 
     const paintTile = useCallback((cx: number, cy: number, erase: boolean, direction: number = 1) => {
         setLevelData(prev => {
@@ -124,6 +103,7 @@ export default function CityEditor() {
                     const gy = cy - offset + by;
                     if (gx < 0 || gx >= prev.width || gy < 0 || gy >= prev.height) continue;
                     const index = gy * prev.width + gx;
+
                     if (activeTool === 'paint') {
                         const newLayers = [...(modified ? newData.layers : prev.layers)];
                         const activeLayer = { ...newLayers[activeLayerIndex] };
@@ -220,29 +200,6 @@ export default function CityEditor() {
         handleCanvasInteraction(e);
     };
 
-    const onMouseMove = (e: React.MouseEvent) => {
-        handleCanvasInteraction(e);
-    };
-
-    const onMouseUp = () => {
-        setIsDrawing(false);
-        setIsErasing(false);
-        lastGridPosRef.current = null;
-    };
-
-    const onMouseLeave = () => {
-        setIsDrawing(false);
-        setIsErasing(false);
-        lastGridPosRef.current = null;
-        setHoverPos(null);
-    };
-
-    const onCanvasWheel = (e: React.WheelEvent) => {
-        if (e.ctrlKey) return;
-        const delta = e.deltaY > 0 ? -1 : 1;
-        setBrushSize(prev => Math.max(1, Math.min(10, prev + delta)));
-    };
-
     const setEntityTile = (configIdx: number, direction: 'right' | 'left' | 'up' | 'down', partIdx: number, tileId: number) => {
         const newConfigs = [...entityConfigs];
         const newParts = [...newConfigs[configIdx][direction]];
@@ -250,23 +207,6 @@ export default function CityEditor() {
         newConfigs[configIdx] = { ...newConfigs[configIdx], [direction]: newParts };
         setEntityConfigs(newConfigs);
     };
-
-    // Handle Palette Zoom specifically with non-passive listener to prevent browser zoom
-    useEffect(() => {
-        const palette = paletteRef.current?.parentElement; // Attach to the scrolling container
-        if (!palette) return;
-
-        const handleWheel = (e: WheelEvent) => {
-            if (e.ctrlKey) {
-                e.preventDefault();
-                const delta = e.deltaY > 0 ? -0.5 : 0.5;
-                setPaletteZoom(prev => Math.max(1, Math.min(8, prev + delta)));
-            }
-        };
-
-        palette.addEventListener('wheel', handleWheel, { passive: false });
-        return () => palette.removeEventListener('wheel', handleWheel);
-    }, []);
 
     const handlePaletteClick = (e: React.MouseEvent) => {
         if (!paletteRef.current) return;
@@ -283,16 +223,18 @@ export default function CityEditor() {
         }
     };
 
+    // Canvas Rendering
     useEffect(() => {
         if (!levelData || !tilemap || !canvasRef.current || activeTool === 'entities') return;
         const ctx = canvasRef.current.getContext('2d');
         if (!ctx) return;
-        ctx.fillStyle = '#111';
+
+        ctx.fillStyle = '#101012'; // Zinc-950-ish
         ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         ctx.imageSmoothingEnabled = false;
 
         if (showGrid) {
-            ctx.strokeStyle = '#222';
+            ctx.strokeStyle = '#1f1f22'; // Zinc-900
             ctx.lineWidth = 1;
             ctx.beginPath();
             for (let x = 0; x <= levelData.width; x++) {
@@ -318,7 +260,6 @@ export default function CityEditor() {
                 ctx.drawImage(tilemap, sx, sy, TILE_SIZE, TILE_SIZE, x, y, ACTUAL_TILE_SIZE, ACTUAL_TILE_SIZE);
             }
         });
-        ctx.globalAlpha = 1.0;
 
         if (showOverlays) {
             if (activeTool === 'drivable') {
@@ -328,31 +269,25 @@ export default function CityEditor() {
                         const x = (i % levelData.width) * ACTUAL_TILE_SIZE;
                         const y = Math.floor(i / levelData.width) * ACTUAL_TILE_SIZE;
 
-                        // Colorize by direction
-                        if (dir === 1) ctx.fillStyle = 'rgba(0, 255, 100, 0.4)'; // Up (Green)
-                        else if (dir === 2) ctx.fillStyle = 'rgba(255, 165, 0, 0.4)'; // Right (Orange)
-                        else if (dir === 3) ctx.fillStyle = 'rgba(0, 100, 255, 0.4)'; // Down (Blue)
-                        else if (dir === 4) ctx.fillStyle = 'rgba(255, 0, 100, 0.4)'; // Left (Red)
-                        else ctx.fillStyle = 'rgba(0, 255, 0, 0.4)'; // Default
-
+                        ctx.fillStyle = dir === 1 || dir === 3 ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.15)';
                         ctx.fillRect(x, y, ACTUAL_TILE_SIZE, ACTUAL_TILE_SIZE);
 
-                        // Small Arrow indicator
-                        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                        // Arrow
+                        ctx.fillStyle = 'rgba(255,255,255,0.7)';
                         const cx = x + ACTUAL_TILE_SIZE / 2;
                         const cy = y + ACTUAL_TILE_SIZE / 2;
-                        const size = 4;
+                        const size = 3;
                         ctx.beginPath();
-                        if (dir === 1) { ctx.moveTo(cx, cy - size); ctx.lineTo(cx - size, cy + size); ctx.lineTo(cx + size, cy + size); } // Up
-                        else if (dir === 2) { ctx.moveTo(cx + size, cy); ctx.lineTo(cx - size, cy - size); ctx.lineTo(cx - size, cy + size); } // Right
-                        else if (dir === 3) { ctx.moveTo(cx, cy + size); ctx.lineTo(cx - size, cy - size); ctx.lineTo(cx + size, cy - size); } // Down
-                        else if (dir === 4) { ctx.moveTo(cx - size, cy); ctx.lineTo(cx + size, cy - size); ctx.lineTo(cx + size, cy + size); } // Left
+                        if (dir === 1) { ctx.moveTo(cx, cy - size); ctx.lineTo(cx - size, cy + size); ctx.lineTo(cx + size, cy + size); }
+                        else if (dir === 2) { ctx.moveTo(cx + size, cy); ctx.lineTo(cx - size, cy - size); ctx.lineTo(cx - size, cy + size); }
+                        else if (dir === 3) { ctx.moveTo(cx, cy + size); ctx.lineTo(cx - size, cy - size); ctx.lineTo(cx + size, cy - size); }
+                        else if (dir === 4) { ctx.moveTo(cx - size, cy); ctx.lineTo(cx + size, cy - size); ctx.lineTo(cx + size, cy + size); }
                         ctx.fill();
                     }
                 }
             }
             if (activeTool === 'walkable') {
-                ctx.fillStyle = 'rgba(0, 100, 255, 0.4)';
+                ctx.fillStyle = 'rgba(100, 200, 255, 0.15)';
                 for (let i = 0; i < levelData.walkable.length; i++) {
                     if (levelData.walkable[i]) {
                         const x = (i % levelData.width) * ACTUAL_TILE_SIZE;
@@ -369,13 +304,8 @@ export default function CityEditor() {
             const cursorY = (hoverPos.y - offset) * ACTUAL_TILE_SIZE;
             const cursorSize = brushSize * ACTUAL_TILE_SIZE;
             ctx.strokeStyle = 'white';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.rect(cursorX, cursorY, cursorSize, cursorSize);
-            ctx.stroke();
-            ctx.strokeStyle = 'rgba(0,0,0,0.5)';
             ctx.lineWidth = 1;
-            ctx.strokeRect(cursorX - 1, cursorY - 1, cursorSize + 2, cursorSize + 2);
+            ctx.strokeRect(cursorX, cursorY, cursorSize, cursorSize);
         }
     }, [levelData, tilemap, activeTool, showGrid, showOverlays, activeLayerIndex, hoverPos, brushSize]);
 
@@ -387,15 +317,12 @@ export default function CityEditor() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(levelData)
             });
-            if (res.ok) alert('Level saved!');
-            else alert('Failed to save.');
-        } catch (err) {
-            console.error(err);
-        }
+            if (res.ok) alert('Saved');
+        } catch (err) { console.error(err); }
     };
 
     const renderTilePreview = (tileId: number) => {
-        if (tileId <= 0) return <div className="w-8 h-8 flex items-center justify-center text-[10px] text-neutral-600">Empty</div>;
+        if (tileId <= 0) return <div className="text-[9px] text-zinc-600">NULL</div>;
         const sheetIndex = tileId - 1;
         const sx = (sheetIndex % TILEMAP_COLS) * TILE_SIZE;
         const sy = Math.floor(sheetIndex / TILEMAP_COLS) * TILE_SIZE;
@@ -410,57 +337,26 @@ export default function CityEditor() {
     };
 
     return (
-        <div className="min-h-screen bg-neutral-900 text-white flex flex-col h-screen overflow-hidden">
-            <div className="bg-neutral-800 p-4 border-b border-neutral-700 flex justify-between items-center z-10 shadow-md">
-                <div className="flex items-center gap-6">
-                    <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-500">
-                        City Editor
-                    </h1>
-                    <div className="flex bg-neutral-900 rounded-lg p-1 border border-neutral-700">
-                        <button onClick={() => setActiveTool('paint')} className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${activeTool === 'paint' ? 'bg-orange-500 text-white' : 'text-neutral-400 hover:text-white'}`}>🖌️ Paint</button>
-                        <button onClick={() => setActiveTool('drivable')} className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${activeTool === 'drivable' ? 'bg-green-600 text-white' : 'text-neutral-400 hover:text-white'}`}>🚗 Drivable</button>
-                        <button onClick={() => setActiveTool('walkable')} className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${activeTool === 'walkable' ? 'bg-blue-600 text-white' : 'text-neutral-400 hover:text-white'}`}>🚶 Walkable</button>
-                        <div className="w-px bg-neutral-700 mx-1"></div>
-                        <button onClick={() => setActiveTool('entities')} className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${activeTool === 'entities' ? 'bg-indigo-600 text-white' : 'text-neutral-400 hover:text-white'}`}>📦 Entities</button>
-                    </div>
-                    {activeTool !== 'entities' && (
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 text-sm bg-neutral-900 px-3 py-1 rounded">
-                                <span className="text-neutral-500">Brush:</span>
-                                <span className="font-mono text-orange-400 font-bold">{brushSize}</span>
-                            </div>
-                        </div>
-                    )}
-                    {activeTool === 'paint' && (
-                        <div className="flex items-center gap-2 border-l border-neutral-700 pl-4">
-                            <span className="text-xs text-neutral-500 uppercase tracking-wider">Layer:</span>
-                            {levelData?.layers.map((l, idx) => (
-                                <button key={idx} onClick={() => setActiveLayerIndex(idx)} className={`text-sm px-2 py-1 rounded ${activeLayerIndex === idx ? 'bg-neutral-600 text-white' : 'text-neutral-400'}`}>{l.name}</button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-                <div className="flex gap-3">
-                    <button onClick={() => setShowGrid(!showGrid)} className="text-neutral-400 text-sm hover:text-white">Grid</button>
-                    <button onClick={() => setShowOverlays(!showOverlays)} className="text-neutral-400 text-sm hover:text-white">Overlays</button>
-                    <button onClick={handleSave} className="bg-emerald-600 text-white px-4 py-2 rounded font-bold hover:bg-emerald-500 transition shadow-lg">Save</button>
-                </div>
-            </div>
+        <div className="h-screen w-screen bg-zinc-950 text-zinc-400 font-sans flex overflow-hidden">
 
-            <div className="flex flex-1 overflow-hidden">
-                {/* Sidebar - Tilemap Palette - Resizable & Zoomable */}
-                <div
-                    className="bg-neutral-800 border-r border-neutral-700 flex flex-col flex-none relative group"
-                    style={{ width: sidebarWidth }}
-                >
-                    <div className="p-3 border-b border-neutral-700 flex justify-between items-center">
-                        <div className="text-xs font-bold text-neutral-500 uppercase">Palette (Ctrl+Scroll to Zoom)</div>
-                        <div className="text-xs text-neutral-400">Scale: <span className="text-white font-mono">{paletteZoom}x</span></div>
+            {/* --- Left Sidebar (Palette) --- */}
+            <div className={`
+                flex-none bg-zinc-950 border-r border-zinc-900 transition-all duration-300 relative
+                ${isSidebarOpen ? 'w-80' : 'w-0'}
+            `}>
+                <div className="h-full flex flex-col overflow-hidden">
+                    <div className="p-4 border-b border-zinc-900 flex justify-between items-center bg-zinc-950/50 backdrop-blur">
+                        <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Palette</span>
+                        <div className="flex gap-1">
+                            <button onClick={() => setPaletteZoom(z => Math.max(1, z - 1))} className="p-1 hover:text-white"><Minus size={14} /></button>
+                            <span className="text-xs font-mono min-w-[20px] text-center">{paletteZoom}x</span>
+                            <button onClick={() => setPaletteZoom(z => Math.min(8, z + 1))} className="p-1 hover:text-white"><Plus size={14} /></button>
+                        </div>
                     </div>
-                    <div className="flex-1 overflow-auto p-4 flex justify-center bg-neutral-900/50">
+                    <div className="flex-1 overflow-auto p-4 content-center bg-[#08080a]">
                         <div
                             ref={paletteRef}
-                            className="relative cursor-crosshair shadow-lg flex-none"
+                            className="relative cursor-crosshair mx-auto shadow-2xl shadow-black ring-1 ring-zinc-800"
                             onClick={handlePaletteClick}
                             style={{ width: TILEMAP_WIDTH * paletteZoom, height: TILEMAP_HEIGHT * paletteZoom }}
                         >
@@ -468,86 +364,178 @@ export default function CityEditor() {
                                 style={{
                                     backgroundImage: `url(/city/tilemap_packed.png)`,
                                     backgroundSize: `${TILEMAP_WIDTH * paletteZoom}px ${TILEMAP_HEIGHT * paletteZoom}px`,
-                                    width: '100%',
-                                    height: '100%',
+                                    width: '100%', height: '100%',
                                     imageRendering: 'pixelated'
                                 }}
                             />
+                            {/* Selection Highlight */}
                             {(() => {
                                 const sheetIndex = selectedTileId - 1;
                                 if (sheetIndex >= 0) {
                                     const col = sheetIndex % TILEMAP_COLS;
                                     const row = Math.floor(sheetIndex / TILEMAP_COLS);
-                                    return <div className="absolute border-2 border-red-500 pointer-events-none" style={{ left: col * TILE_SIZE * paletteZoom, top: row * TILE_SIZE * paletteZoom, width: TILE_SIZE * paletteZoom, height: TILE_SIZE * paletteZoom }} />;
+                                    return <div className="absolute ring-1 ring-white/50" style={{ left: col * TILE_SIZE * paletteZoom, top: row * TILE_SIZE * paletteZoom, width: TILE_SIZE * paletteZoom, height: TILE_SIZE * paletteZoom }} />;
                                 }
                             })()}
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    {/* Drag Handle */}
-                    <div
-                        className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-orange-500 transition-colors z-20"
-                        onMouseDown={() => {
-                            setIsResizingSidebar(true);
-                            document.body.style.cursor = 'col-resize';
-                        }}
-                    />
+            {/* --- Toggle Sidebar Button --- */}
+            <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className={`absolute bottom-4 z-50 p-2 bg-zinc-900/90 border border-zinc-800 text-zinc-400 hover:text-white rounded-r-lg transition-all duration-300 ${isSidebarOpen ? 'left-80' : 'left-0'}`}
+            >
+                {isSidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+            </button>
+
+
+            {/* --- Main Content --- */}
+            <div className="flex-1 relative flex flex-col bg-[#050505]">
+
+                {/* Top Center: Tools HUD */}
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 bg-zinc-900/90 backdrop-blur-md border border-zinc-800/50 rounded-full px-2 py-1.5 flex gap-1 shadow-2xl">
+                    {[
+                        { id: 'paint', icon: MousePointer, label: 'Paint' },
+                        { id: 'drivable', icon: Car, label: 'Roads' },
+                        { id: 'walkable', icon: Footprints, label: 'Walk' },
+                        { id: 'entities', icon: Box, label: 'Entities' },
+                    ].map(tool => (
+                        <button
+                            key={tool.id}
+                            onClick={() => setActiveTool(tool.id as any)}
+                            className={`p-2 rounded-full transition-all group relative ${activeTool === tool.id ? 'bg-zinc-100 text-black' : 'hover:bg-zinc-800 text-zinc-500 hover:text-white'}`}
+                        >
+                            <tool.icon size={18} />
+                            {/* Tooltip */}
+                            <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 text-[10px] bg-zinc-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                                {tool.label}
+                            </span>
+                        </button>
+                    ))}
+
+                    {/* Divider */}
+                    <div className="w-px h-8 bg-zinc-800 mx-1 self-center" />
+
+                    {/* Active Tool Settings */}
+                    {activeTool !== 'entities' && (
+                        <div className="flex items-center gap-2 pl-1 pr-2">
+                            <span className="text-[10px] font-mono uppercase text-zinc-600">Size</span>
+                            <div className="flex items-center gap-1 bg-zinc-800 rounded px-1">
+                                <button onClick={() => setBrushSize(b => Math.max(1, b - 1))} className="p-1 hover:text-white"><Minus size={12} /></button>
+                                <span className="text-xs font-mono w-4 text-center">{brushSize}</span>
+                                <button onClick={() => setBrushSize(b => Math.min(10, b + 1))} className="p-1 hover:text-white"><Plus size={12} /></button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                <div className="flex-1 overflow-auto bg-neutral-900 relative p-8 flex justify-center">
-                    {activeTool === 'entities' ? (
-                        <div className="w-full max-w-5xl">
-                            <div className="bg-neutral-800 rounded-xl p-6 shadow-2xl border border-neutral-700">
-                                <h2 className="text-2xl font-bold mb-6 text-white flex items-center gap-2">
-                                    <span>🚙</span> Entity Configuration
-                                </h2>
-                                <div className="space-y-6">
-                                    {entityConfigs.map((entity, idx) => (
-                                        <div key={idx} className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-700">
-                                            <div className="flex items-center gap-3 mb-3 border-b border-neutral-700 pb-2">
-                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${entity.type === 'train' ? 'bg-yellow-600' : 'bg-blue-600'}`}>
-                                                    {idx + 1}
-                                                </div>
-                                                <span className="font-bold text-sm uppercase tracking-wider">{entity.type}</span>
-                                            </div>
 
-                                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                                {['right', 'left', 'up', 'down'].map((dir) => (
-                                                    <div key={dir} className="flex flex-col gap-2">
-                                                        <span className="text-xs text-neutral-500 uppercase font-semibold text-center">{dir}</span>
-                                                        <div className="flex gap-1 justify-center">
-                                                            {(entity[dir as keyof EntityConfig] as number[]).map((tileId, partIdx) => (
-                                                                <div key={partIdx}
-                                                                    className="w-10 h-10 bg-neutral-800 border border-neutral-600 rounded flex items-center justify-center hover:border-orange-500 cursor-pointer overflow-hidden relative group"
-                                                                    onClick={() => setEntityTile(idx, dir as any, partIdx, selectedTileId)}
-                                                                >
-                                                                    {renderTilePreview(tileId)}
-                                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[8px] font-bold">SET</div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
+                {/* Top Right: Global Actions */}
+                <div className="absolute top-6 right-6 z-40 flex gap-2">
+                    <button onClick={() => setShowGrid(!showGrid)} className={`p-2 rounded-lg border border-zinc-800 transition ${showGrid ? 'bg-zinc-800 text-white' : 'bg-zinc-900/50 text-zinc-500 hover:text-white'}`}>
+                        <Grid size={18} />
+                    </button>
+                    <button onClick={() => setShowOverlays(!showOverlays)} className={`p-2 rounded-lg border border-zinc-800 transition ${showOverlays ? 'bg-zinc-800 text-white' : 'bg-zinc-900/50 text-zinc-500 hover:text-white'}`}>
+                        <Eye size={18} />
+                    </button>
+                    <div className="w-px h-full bg-zinc-800 mx-1" />
+                    <button onClick={handleSave} className="p-2 rounded-lg bg-zinc-100 text-black border border-white hover:bg-white transition flex items-center gap-2 font-medium text-sm px-4">
+                        <Save size={16} /> Save
+                    </button>
+                </div>
+
+
+                {/* Bottom Left: Layer Selector (Only for Paint) */}
+                {activeTool === 'paint' && (
+                    <div className="absolute bottom-6 left-6 z-30 bg-zinc-900/90 backdrop-blur border border-zinc-800 rounded-lg overflow-hidden flex flex-col shadow-2xl">
+                        <div className="px-3 py-2 border-b border-zinc-800 bg-zinc-800/50 text-[10px] uppercase font-bold text-zinc-500 flex items-center gap-2">
+                            <Layers size={12} /> Layers
+                        </div>
+                        <div className="flex flex-col p-1">
+                            {levelData?.layers.map((l, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setActiveLayerIndex(idx)}
+                                    className={`px-3 py-2 text-left text-xs font-mono transition rounded ${activeLayerIndex === idx ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                >
+                                    {idx + 1}. {l.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+
+                {/* --- Content Area --- */}
+                <div className="flex-1 overflow-auto flex items-center justify-center p-8">
+                    {activeTool === 'entities' ? (
+                        <div className="w-full max-w-4xl bg-zinc-900/50 backdrop-blur border border-zinc-800 rounded-2xl p-8 shadow-2xl">
+                            <div className="flex justify-between items-end mb-8 border-b border-zinc-800 pb-4">
+                                <h2 className="text-xl font-medium text-white flex items-center gap-2"><Box size={20} /> Entity Configuration</h2>
+                                <p className="text-xs text-zinc-500">Configure vehicle sprite sequences</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4">
+                                {entityConfigs.map((entity, idx) => (
+                                    <div key={idx} className="bg-black/20 rounded-lg p-4 border border-zinc-800/50 hover:border-zinc-700 transition">
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <div className="w-6 h-6 rounded bg-zinc-800 flex items-center justify-center text-xs font-mono text-white">{idx}</div>
+                                            <div className="text-sm font-bold text-zinc-300 uppercase tracking-wider">{entity.type}</div>
                                         </div>
-                                    ))}
-                                </div>
+
+                                        <div className="grid grid-cols-4 gap-4">
+                                            {['up', 'right', 'down', 'left'].map((dir) => (
+                                                <div key={dir} className="flex flex-col gap-2">
+                                                    <span className="text-[10px] text-zinc-600 uppercase font-bold text-center">{dir}</span>
+                                                    <div className="flex gap-1 justify-center bg-zinc-900/50 p-2 rounded">
+                                                        {(entity[dir as keyof EntityConfig] as number[]).map((tileId, partIdx) => (
+                                                            <button
+                                                                key={partIdx}
+                                                                onClick={() => setEntityTile(idx, dir as any, partIdx, selectedTileId)}
+                                                                className="w-8 h-8 bg-zinc-950 border border-zinc-800 hover:border-white transition relative group overflow-hidden"
+                                                            >
+                                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                                    {renderTilePreview(tileId)}
+                                                                </div>
+                                                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition" />
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     ) : (
                         levelData && (
-                            <canvas
-                                ref={canvasRef}
-                                width={levelData.width * ACTUAL_TILE_SIZE}
-                                height={levelData.height * ACTUAL_TILE_SIZE}
-                                onMouseDown={onMouseDown}
-                                onMouseMove={onMouseMove}
-                                onMouseUp={onMouseUp}
-                                onMouseLeave={onMouseLeave}
-                                onContextMenu={(e) => e.preventDefault()}
-                                onWheel={onCanvasWheel}
-                                className="shadow-2xl border border-neutral-800 cursor-crosshair flex-none cursor-none block"
-                            />
+                            <div className="relative shadow-2xl shadow-black ring-1 ring-zinc-800">
+                                <canvas
+                                    ref={canvasRef}
+                                    width={levelData.width * ACTUAL_TILE_SIZE}
+                                    height={levelData.height * ACTUAL_TILE_SIZE}
+                                    onMouseDown={onMouseDown}
+                                    onMouseMove={(e) => {
+                                        if (isDrawing) handleCanvasInteraction(e);
+                                        else {
+                                            // Just update hover
+                                            const rect = canvasRef.current!.getBoundingClientRect();
+                                            const scaleX = canvasRef.current!.width / rect.width;
+                                            const scaleY = canvasRef.current!.height / rect.height;
+                                            const gx = Math.floor(((e.clientX - rect.left) * scaleX) / ACTUAL_TILE_SIZE);
+                                            const gy = Math.floor(((e.clientY - rect.top) * scaleY) / ACTUAL_TILE_SIZE);
+                                            setHoverPos({ x: gx, y: gy });
+                                        }
+                                    }}
+                                    onMouseUp={() => { setIsDrawing(false); setIsErasing(false); lastGridPosRef.current = null; }}
+                                    onMouseLeave={() => { setIsDrawing(false); setIsErasing(false); setHoverPos(null); }}
+                                    onContextMenu={(e) => e.preventDefault()}
+                                    className="block cursor-none bg-zinc-950"
+                                />
+                            </div>
                         )
                     )}
                 </div>
