@@ -1,56 +1,72 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ExternalLink, Github } from "lucide-react"
+import { Github, Star, GitFork } from "lucide-react"
 import Link from "next/link"
 import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-
-// Need to quickly create Card and Badge components or use inline styles.
-// Since I want "premium", using components is better.
-// I'll create `card.tsx` and `badge.tsx` in a separate step or just inline styles for now to save time if allowed.
-// But "modern" requires good reuse. I will pause and create `card.tsx` and `badge.tsx` after this file if I reference them,
-// OR likely I should create them first.
-// I'll assume I have them or will create them immediately. I'll create them in the next tool calls.
 
 const projects = [
     {
-        title: "E-Commerce Dashboard",
-        description:
-            "A comprehensive dashboard for managing products, orders, and customers with real-time analytics.",
-        tags: ["Next.js", "TypeScript", "Tailwind CSS", "Recharts"],
-        links: {
-            demo: "#",
-            repo: "#",
-        },
+        title: "biscuit",
+        description: "Native IDE with Agents and Extensions <20 MB in Size",
+        language: "Python",
+        languageColor: "#3572A5",
+        stars: 239,
+        forks: 31,
+        link: "https://github.com/tomlin7/biscuit",
     },
     {
-        title: "Social Media App",
+        title: "cupcake",
         description:
-            "A full-stack social platform with real-time messaging, file sharing, and user profiles.",
-        tags: ["React", "Node.js", "Socket.io", "PostgreSQL"],
-        links: {
-            demo: "#",
-            repo: "#",
-        },
+            "Embeddable feature-rich code editor widget for tkinter, with syntax highlighting, completions, minimap and more",
+        language: "Python",
+        languageColor: "#3572A5",
+        stars: 37,
+        forks: 2,
+        link: "https://github.com/tomlin7/cupcake",
     },
     {
-        title: "AI Content Generator",
+        title: "ecommerce-chatbot",
         description:
-            "An application that uses OpenAI API to generate marketing copy and blog posts.",
-        tags: ["OpenAI API", "Next.js", "Vercel AI SDK"],
-        links: {
-            demo: "#",
-            repo: "#",
-        },
+            "E-commerce platform powered by agents with vector search, recommendations, order/cart management capabilities.",
+        language: "TypeScript",
+        languageColor: "#3178c6",
+        stars: 13,
+        forks: 4,
+        link: "https://github.com/tomlin7/ecommerce-chatbot",
+    },
+    {
+        title: "lemon",
+        description: "The Lemon Programming Language. Minimalist, dynamic.",
+        language: "Go",
+        languageColor: "#00ADD8",
+        stars: 7,
+        forks: 0,
+        link: "https://github.com/tomlin7/lemon",
+    },
+    {
+        title: "BunchHQ/Bunch",
+        description: "An upcoming cross-platform real-time group chat platform",
+        language: "Python",
+        languageColor: "#3572A5",
+        stars: 4,
+        forks: 0,
+        link: "https://github.com/BunchHQ/Bunch",
+    },
+    {
+        title: "Ember",
+        description: "Game Engine written in C++",
+        language: "C++",
+        languageColor: "#f34b7d",
+        stars: 17,
+        forks: 2,
+        link: "https://github.com/tomlin7/Ember",
     },
 ]
 
@@ -62,13 +78,13 @@ export function Projects() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
                 viewport={{ once: true }}
-                className="flex flex-col items-center gap-4 text-center mb-12"
+                className="flex flex-col items-center gap-4 text-center mb-16"
             >
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
                     Featured Projects
                 </h2>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                    Here are some of the projects I've worked on recently.
+                    Check out some of my open source contributions and personal projects.
                 </p>
             </motion.div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -80,35 +96,42 @@ export function Projects() {
                         transition={{ duration: 0.5, delay: index * 0.1 }}
                         viewport={{ once: true }}
                     >
-                        <Card className="h-full flex flex-col justify-between overflow-hidden border-border/50 bg-background/60 backdrop-blur transition-all hover:border-primary/50 hover:shadow-md">
-                            <CardHeader>
-                                <CardTitle>{project.title}</CardTitle>
-                                <CardDescription>{project.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex flex-wrap gap-2">
-                                    {project.tags.map((tag) => (
-                                        <Badge key={tag} variant="secondary">
-                                            {tag}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </CardContent>
-                            <CardFooter className="flex gap-2">
-                                <Button variant="outline" size="sm" asChild className="w-full">
-                                    <Link href={project.links.demo} target="_blank">
-                                        <ExternalLink className="mr-2 h-4 w-4" />
-                                        Demo
-                                    </Link>
-                                </Button>
-                                <Button variant="outline" size="sm" asChild className="w-full">
-                                    <Link href={project.links.repo} target="_blank">
-                                        <Github className="mr-2 h-4 w-4" />
-                                        Code
-                                    </Link>
-                                </Button>
-                            </CardFooter>
-                        </Card>
+                        <Link href={project.link} target="_blank" className="block h-full group">
+                            <Card className="h-full flex flex-col justify-between overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1">
+                                <CardHeader className="space-y-2">
+                                    <div className="flex items-start justify-between">
+                                        <CardTitle className="text-xl font-semibold group-hover:text-primary transition-colors">
+                                            {project.title}
+                                        </CardTitle>
+                                        <Github className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                    </div>
+                                    <CardDescription className="line-clamp-3">
+                                        {project.description}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="mt-auto pt-4">
+                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                        <div className="flex items-center gap-1.5">
+                                            <span
+                                                className="w-3 h-3 rounded-full"
+                                                style={{ backgroundColor: project.languageColor }}
+                                            />
+                                            <span>{project.language}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                                            <Star className="h-4 w-4" />
+                                            <span>{project.stars}</span>
+                                        </div>
+                                        {project.forks > 0 && (
+                                            <div className="flex items-center gap-1 hover:text-foreground transition-colors">
+                                                <GitFork className="h-4 w-4" />
+                                                <span>{project.forks}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </Link>
                     </motion.div>
                 ))}
             </div>
